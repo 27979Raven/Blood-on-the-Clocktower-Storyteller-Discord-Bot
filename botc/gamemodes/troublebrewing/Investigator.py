@@ -4,7 +4,7 @@ import json
 import random
 import datetime
 import discord
-from botc import Townsfolk, Character, Category, NonRecurringAction
+from botc import Townsfolk, Character, Category, NonRecurringAction, BOTCUtils
 from ._utils import TroubleBrewing, TBRole
 import globvars
 
@@ -81,8 +81,10 @@ class Investigator(Townsfolk, TroubleBrewing, Character, NonRecurringAction):
     async def send_n1_end_message(self, recipient):
         """Send two possible players for a particular minion character."""
 
+        player = BOTCUtils.get_player_from_id(recipient.id)
+
         # We have a list of two players
-        two_player_list = self.get_two_possible_minions()
+        two_player_list = self.get_two_possible_minions(player)
         registered_minion_type = two_player_list[2]
         link = registered_minion_type.art_link
         assert registered_minion_type.category == Category.minion, f"Investigator received {registered_minion_type}"
@@ -111,7 +113,7 @@ class Investigator(Townsfolk, TroubleBrewing, Character, NonRecurringAction):
         except discord.Forbidden:
             pass
     
-    def get_two_possible_minions(self):
+    def get_two_possible_minions(self, investigator_player):
         """Send two possible minions"""
 
         # First set the social self
@@ -139,7 +141,7 @@ class Investigator(Townsfolk, TroubleBrewing, Character, NonRecurringAction):
 
         # Choose the other player
         other_possibilities = [player for player in globvars.master_state.game.sitting_order 
-                               if player.user.id != minion.user.id]
+                               if player.user.id != minion.user.id and player.user.id != investigator_player.user.id]
         other = random.choice(other_possibilities)
         
         # Construct the message
